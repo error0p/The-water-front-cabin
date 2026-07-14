@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const guests = document.getElementById('book-guests').value;
 
       if (name && email) {
-        feedback.textContent = `Thank you, ${name}! Your booking inquiry for a luxury stay with ${guests} guests at Waterfront Villa, Banjara Hills has been submitted. Our guest relationships team will contact you shortly.`;
+        feedback.textContent = `Thank you, ${name}! Your booking inquiry for a luxury stay with ${guests} guests at Waterfront Cabin, Banjara Hills has been submitted. Our guest relationships team will contact you shortly.`;
         feedback.className = 'form-feedback success';
         bookingForm.reset();
         

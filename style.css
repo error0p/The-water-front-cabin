@@ -252,6 +252,7 @@ header.navbar-scrolled .btn-nav {
 .logo span {
   font-weight: 300;
   color: var(--color-primary);
+  margin-left: 0.15em;
 }
 
 nav {
