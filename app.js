@@ -1,0 +1,304 @@
+document.addEventListener('DOMContentLoaded', () => {
+
+  // --- 1. Header Scroll Timeline Fallback ---
+  const header = document.querySelector('header');
+  const checkScrollSupport = () => {
+    return CSS.supports('(animation-timeline: scroll()) and (animation-range: 0% 100%)');
+  };
+
+  if (!checkScrollSupport()) {
+    // If native CSS scroll-driven animations are not supported (e.g. Firefox)
+    const handleScroll = () => {
+      if (window.scrollY > 80) {
+        header.classList.add('navbar-scrolled');
+      } else {
+        header.classList.remove('navbar-scrolled');
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Trigger initially in case of refresh
+  }
+
+
+  // --- 2. Scroll Entry/Exit ViewTimeline Fallback ---
+  const checkViewSupport = () => {
+    return CSS.supports('(animation-timeline: view()) and (animation-range: entry)');
+  };
+
+  if (!checkViewSupport()) {
+    // IntersectionObserver fallback for fade-in animations
+    const revealElements = document.querySelectorAll('.reveal-effect');
+    const observerOptions = {
+      root: null,
+      threshold: 0.15,
+      rootMargin: '0px 0px -80px 0px'
+    };
+
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('reveal-effect-active');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    revealElements.forEach(el => {
+      el.classList.add('js-reveal');
+      revealObserver.observe(el);
+    });
+  }
+
+
+  // --- 3. Mobile Hamburger Menu Toggle ---
+  const mobileToggle = document.querySelector('.mobile-nav-toggle');
+  const navMenu = document.querySelector('nav');
+
+  if (mobileToggle && navMenu) {
+    mobileToggle.addEventListener('click', () => {
+      navMenu.classList.toggle('active');
+      mobileToggle.classList.toggle('active');
+
+      const spans = mobileToggle.querySelectorAll('span');
+      if (mobileToggle.classList.contains('active')) {
+        spans[0].style.transform = 'rotate(45deg) translate(6px, 6px)';
+        spans[1].style.opacity = '0';
+        spans[2].style.transform = 'rotate(-45deg) translate(6px, -7px)';
+      } else {
+        spans[0].style.transform = 'none';
+        spans[1].style.opacity = '1';
+        spans[2].style.transform = 'none';
+      }
+    });
+
+    // Close mobile menu when clicking a link
+    navMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        if (navMenu.classList.contains('active')) {
+          navMenu.classList.remove('active');
+          mobileToggle.classList.remove('active');
+          const spans = mobileToggle.querySelectorAll('span');
+          spans[0].style.transform = 'none';
+          spans[1].style.opacity = '1';
+          spans[2].style.transform = 'none';
+        }
+      });
+    });
+  }
+
+
+  // --- 4. Villa Showcase Carousel (Slicing Spaces) ---
+  const track = document.querySelector('.villas-track');
+  const cards = document.querySelectorAll('.villa-card');
+  const prevBtn = document.querySelector('.villas-nav-btn.prev');
+  const nextBtn = document.querySelector('.villas-nav-btn.next');
+
+  if (track && cards.length > 0 && prevBtn && nextBtn) {
+    let index = 0;
+
+    const getCardsPerView = () => {
+      if (window.innerWidth <= 768) return 1;
+      if (window.innerWidth <= 1024) return 2;
+      return 3;
+    };
+
+    const updateCarousel = () => {
+      const cardsPerView = getCardsPerView();
+      const maxIndex = Math.max(0, cards.length - cardsPerView);
+      if (index > maxIndex) index = maxIndex;
+      if (index < 0) index = 0;
+
+      const cardWidth = cards[0].getBoundingClientRect().width;
+      const gap = parseFloat(window.getComputedStyle(track).gap) || 0;
+      const amountToMove = (cardWidth + gap) * index;
+
+      track.style.transform = `translateX(-${amountToMove}px)`;
+
+      // Update button opacity
+      prevBtn.style.opacity = index === 0 ? '0.3' : '1';
+      prevBtn.style.cursor = index === 0 ? 'default' : 'pointer';
+      nextBtn.style.opacity = index === maxIndex ? '0.3' : '1';
+      nextBtn.style.cursor = index === maxIndex ? 'default' : 'pointer';
+    };
+
+    nextBtn.addEventListener('click', () => {
+      const cardsPerView = getCardsPerView();
+      if (index < cards.length - cardsPerView) {
+        index++;
+        updateCarousel();
+      }
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (index > 0) {
+        index--;
+        updateCarousel();
+      }
+    });
+
+    window.addEventListener('resize', updateCarousel);
+    setTimeout(updateCarousel, 150);
+  }
+
+
+  // --- 5. Dynamic Space Details Modal (Dialog) ---
+  const spaceData = {
+    'heritage-salon': {
+      name: "The Heritage Cane Salon",
+      location: "Banjara Hills",
+      tag: "Ground Floor Salon",
+      dimensions: "950 sq. ft.",
+      image: "images/salon.jpg",
+      desc: "A beautifully styled heritage living salon featuring signature woven cane armchairs, a premium vintage Persian area rug, polished marble floors, and an arched door leading to the gardens. This space radiates old-world warmth, perfect for intimate conversations and reading.",
+      amenities: ["Bespoke Cane Armchairs", "Vintage Persian Rug", "Arched Doorways", "Polished Marble Floor", "Courtyard Views", "Ambient Warm Lighting"]
+    },
+    'classic-lounge': {
+      name: "The Classic Living Lounge",
+      location: "Banjara Hills",
+      tag: "Main Lounge",
+      dimensions: "1,200 sq. ft.",
+      image: "images/lounge.jpg",
+      desc: "The primary living lounge of the cabin, designed for family gathering and entertainment. It features comfortable beige fabric sofa sets, a central solid teak coffee table, custom wooden media consoles, soft cream drapes, and smart temperature controls.",
+      amenities: ["Plush Fabric Sofas", "Teak Coffee Table", "Wood Media Console", "Cream Drapes", "Climate Control (AC)", "Indirect LED Ceiling Lights"]
+    },
+    'stair-landing': {
+      name: "The Staircase Landing Hall",
+      location: "Banjara Hills",
+      tag: "First Floor Transition",
+      dimensions: "600 sq. ft.",
+      image: "images/hallway.jpg",
+      desc: "A bright transition hall connecting the private bedrooms on the first floor. It features a custom-designed black wrought-iron staircase railing, a cozy side couch, polished marble floors, and tall classic timber and glass display cabinets holding selected artifacts.",
+      amenities: ["Wrought-Iron Railing", "Teak Glass Cabinet", "Lounge Couch", "Polished Marble Floor", "First Floor Balcony Access", "Natural Daylighting"]
+    },
+    'scenic-sitting': {
+      name: "The Scenic Sitting Room",
+      location: "Banjara Hills",
+      tag: "Garden Sitting Area",
+      dimensions: "850 sq. ft.",
+      image: "images/sitting.jpg",
+      desc: "A peaceful private sitting room separated by a classic white-paneled window frame partition. Equipped with comfortable olive-green fabric sofa seating, French timber-and-glass doors opening directly to the private garden balcony, and polished marble flooring.",
+      amenities: ["Paneled Glass Partition", "Green Sofa Seating", "French Timber Doors", "Polished Marble Floor", "Lakeside Balcony Access", "Private Seclusion"]
+    }
+  };
+
+  const dialogOverlay = document.querySelector('.dialog-overlay');
+  const dialogClose = document.querySelector('.dialog-close');
+
+  if (dialogOverlay && dialogClose) {
+    document.querySelectorAll('.explore-space-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const spaceId = btn.getAttribute('data-space-id');
+        const space = spaceData[spaceId];
+
+        if (space) {
+          // Populate details
+          dialogOverlay.querySelector('.villa-loc').textContent = `${space.location} • ${space.tag}`;
+          dialogOverlay.querySelector('.dialog-header h2').textContent = space.name;
+          dialogOverlay.querySelector('.dialog-image img').src = space.image;
+          dialogOverlay.querySelector('.dialog-image img').alt = space.name;
+          dialogOverlay.querySelector('.dialog-features p').textContent = space.desc;
+          
+          // Re-label Price to Dimensions
+          dialogOverlay.querySelector('.dialog-price span.label').textContent = "Dimensions";
+          dialogOverlay.querySelector('.dialog-price .value').textContent = space.dimensions;
+
+          // Render amenities list
+          const list = dialogOverlay.querySelector('.dialog-amenities-list');
+          list.innerHTML = '';
+          space.amenities.forEach(amenity => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path fill="#C5A059" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+              <span>${amenity}</span>
+            `;
+            list.appendChild(li);
+          });
+
+          // Show modal
+          dialogOverlay.classList.add('active');
+          document.body.style.overflow = 'hidden'; // Lock background scroll
+        }
+      });
+    });
+
+    const closeModal = () => {
+      dialogOverlay.classList.remove('active');
+      document.body.style.overflow = 'auto'; // Unlock background scroll
+    };
+
+    dialogClose.addEventListener('click', closeModal);
+    dialogOverlay.addEventListener('click', (e) => {
+      if (e.target === dialogOverlay) {
+        closeModal();
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && dialogOverlay.classList.contains('active')) {
+        closeModal();
+      }
+    });
+  }
+
+
+  // --- 6. Booking Inquiry Form Validation ---
+  const bookingForm = document.querySelector('.booking-form');
+  const feedback = document.querySelector('.form-feedback');
+
+  if (bookingForm && feedback) {
+    bookingForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('book-name').value.trim();
+      const email = document.getElementById('book-email').value.trim();
+      const guests = document.getElementById('book-guests').value;
+
+      if (name && email) {
+        feedback.textContent = `Thank you, ${name}! Your booking inquiry for a luxury stay with ${guests} guests at Waterfront Villa, Banjara Hills has been submitted. Our guest relationships team will contact you shortly.`;
+        feedback.className = 'form-feedback success';
+        bookingForm.reset();
+        
+        // Scroll feedback into view smoothly
+        feedback.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Show the element in case it was hidden previously
+        feedback.style.display = 'block';
+        
+        // Hide success message after 10 seconds
+        setTimeout(() => {
+          feedback.style.display = 'none';
+        }, 10000);
+      }
+    });
+  }
+
+
+  // --- 7. Smooth scrolling for internal anchor links ---
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      const targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      
+      const targetElement = document.querySelector(targetId);
+      if (targetElement) {
+        e.preventDefault();
+        
+        // Get header height to offset scroll
+        const offset = 80; // height of sticky bar
+        
+        const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+        const offsetPosition = elementPosition - offset;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+
+});
