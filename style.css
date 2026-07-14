@@ -1646,3 +1646,41 @@ footer {
     padding-top: 2.5rem;
   }
 }
+
+/* Skeleton Loading Placeholder Blocks */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.space-card,
+.villa-image-wrapper,
+.experience-media,
+.dialog-image {
+  background: linear-gradient(90deg, var(--color-bg-alt) 25%, var(--color-border) 50%, var(--color-bg-alt) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2s infinite linear;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Base states for smooth fade-in */
+.space-bg,
+.villa-image-wrapper img,
+.experience-media img,
+.dialog-image img {
+  opacity: 0;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Loaded state reveals actual content */
+.space-bg.loaded,
+.villa-image-wrapper img.loaded,
+.experience-media img.loaded,
+.dialog-image img.loaded {
+  opacity: 1;
+}

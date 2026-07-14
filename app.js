@@ -195,8 +195,20 @@ document.addEventListener('DOMContentLoaded', () => {
           // Populate details
           dialogOverlay.querySelector('.villa-loc').textContent = `${space.location} • ${space.tag}`;
           dialogOverlay.querySelector('.dialog-header h2').textContent = space.name;
-          dialogOverlay.querySelector('.dialog-image img').src = space.image;
-          dialogOverlay.querySelector('.dialog-image img').alt = space.name;
+          const modalImg = dialogOverlay.querySelector('.dialog-image img');
+          modalImg.classList.remove('loaded');
+          modalImg.src = space.image;
+          modalImg.alt = space.name;
+          if (modalImg.complete) {
+            modalImg.classList.add('loaded');
+          } else {
+            modalImg.onload = () => {
+              modalImg.classList.add('loaded');
+            };
+            modalImg.onerror = () => {
+              modalImg.classList.add('loaded');
+            };
+          }
           dialogOverlay.querySelector('.dialog-features p').textContent = space.desc;
           
           // Re-label Price to Dimensions
@@ -299,6 +311,41 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     });
+  });
+
+
+  // --- 8. Skeleton Loader Image Fade-in ---
+  const mediaElements = document.querySelectorAll('img, .space-bg');
+  mediaElements.forEach(el => {
+    if (el.closest('.dialog-overlay')) return; // Handled dynamically on modal open
+    
+    if (el.tagName === 'IMG') {
+      if (el.complete) {
+        el.classList.add('loaded');
+      } else {
+        el.addEventListener('load', () => {
+          el.classList.add('loaded');
+        });
+        el.addEventListener('error', () => {
+          el.classList.add('loaded');
+        });
+      }
+    } else {
+      const bgStyle = window.getComputedStyle(el).backgroundImage;
+      const match = bgStyle.match(/url\(['"]?(.*?)['"]?\)/);
+      if (match && match[1]) {
+        const tempImg = new Image();
+        tempImg.src = match[1];
+        tempImg.onload = () => {
+          el.classList.add('loaded');
+        };
+        tempImg.onerror = () => {
+          el.classList.add('loaded');
+        };
+      } else {
+        el.classList.add('loaded');
+      }
+    }
   });
 
 });
