@@ -1,0 +1,10 @@
+{
+  "name": "pg-villa",
+  "version": "1.0.0",
+  "description": "PG Villa Project",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python3 -m http.server 3000",
+    "start": "python3 -m http.server 3000"
+  }
+}

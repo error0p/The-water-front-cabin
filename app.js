@@ -1,22 +1,81 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-  // --- 1. Header Scroll Timeline Fallback ---
+  // --- 1. Smart Header Scroll (Hide on Scroll Down, Show on Scroll Up & Top) ---
   const header = document.querySelector('header');
-  const checkScrollSupport = () => {
-    return CSS.supports('(animation-timeline: scroll()) and (animation-range: 0% 100%)');
+  let lastScrollY = window.scrollY;
+
+  const handleHeaderScroll = () => {
+    const currentScrollY = window.scrollY;
+
+    // 1. First Header (at top of page): always visible, transparent background
+    if (currentScrollY <= 80) {
+      header.classList.remove('nav-hidden');
+      header.classList.remove('navbar-scrolled');
+      lastScrollY = currentScrollY;
+      return;
+    }
+
+    // 2. Scrolled past top: add scrolled background styling
+    header.classList.add('navbar-scrolled');
+
+    // 3. Scrolling Down: Hide the navbar
+    if (currentScrollY > lastScrollY && currentScrollY > 120) {
+      header.classList.add('nav-hidden');
+    } 
+    // 4. Scrolling Up: Show the navbar again
+    else if (currentScrollY < lastScrollY) {
+      header.classList.remove('nav-hidden');
+    }
+
+    lastScrollY = currentScrollY;
   };
 
-  if (!checkScrollSupport()) {
-    // If native CSS scroll-driven animations are not supported (e.g. Firefox)
-    const handleScroll = () => {
-      if (window.scrollY > 80) {
-        header.classList.add('navbar-scrolled');
-      } else {
-        header.classList.remove('navbar-scrolled');
+  window.addEventListener('scroll', handleHeaderScroll, { passive: true });
+  handleHeaderScroll(); // Initialize state
+
+  // --- 1b. Hero Parallax ---
+  const hero = document.querySelector('.hero');
+  const heroScene = document.querySelector('.hero-scene');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  if (hero && heroScene && !reduceMotion.matches) {
+    let parallaxTicking = false;
+
+    const updateHeroParallax = () => {
+      const heroRect = hero.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+      if (heroRect.bottom >= 0 && heroRect.top <= viewportHeight) {
+        const scrollableDistance = Math.max(hero.offsetHeight - viewportHeight, 1);
+        const rawProgress = Math.min(Math.max(-heroRect.top / scrollableDistance, 0), 1);
+        
+        // Complete the villa landing at 85% of scroll so it locks into place before the body scrolls in
+        const progress = Math.min(rawProgress / 0.85, 1);
+        const rise = 1 - Math.pow(1 - progress, 2.2);
+        
+        heroScene.style.setProperty('--hero-progress', progress.toFixed(4));
+        heroScene.style.setProperty('--hero-rise', rise.toFixed(4));
+
+        // Staggered fade-in reveals for description paragraph and buttons when scrolling down
+        const descOpacity = Math.min(Math.max((rise - 0.22) / 0.4, 0), 1);
+        const actionsOpacity = Math.min(Math.max((rise - 0.42) / 0.4, 0), 1);
+        heroScene.style.setProperty('--hero-desc-opacity', descOpacity.toFixed(4));
+        heroScene.style.setProperty('--hero-actions-opacity', actionsOpacity.toFixed(4));
+      }
+
+      parallaxTicking = false;
+    };
+
+    const requestHeroParallax = () => {
+      if (!parallaxTicking) {
+        window.requestAnimationFrame(updateHeroParallax);
+        parallaxTicking = true;
       }
     };
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Trigger initially in case of refresh
+
+    window.addEventListener('scroll', requestHeroParallax, { passive: true });
+    window.addEventListener('resize', requestHeroParallax);
+    updateHeroParallax();
   }
 
 
@@ -347,5 +406,146 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+
+  // --- 9. Villa 3D Perspective Coverflow Gallery ---
+  const gallerySection = document.querySelector('#gallery-slider');
+  if (gallerySection) {
+    const cards = gallerySection.querySelectorAll('.coverflow-card');
+    const dots = gallerySection.querySelectorAll('.dot-btn');
+    const prevBtn = gallerySection.querySelector('.prev-btn');
+    const nextBtn = gallerySection.querySelector('.next-btn');
+    const activeTag = gallerySection.querySelector('.active-tag');
+    const activeHeading = gallerySection.querySelector('.active-heading');
+    let currentIndex = 0;
+    let autoplayTimer = null;
+    const totalCards = cards.length;
+
+    const slideInfo = [
+      { tag: "Beige Living Salon", title: "Classic Living Salon & Persian Area Rug" },
+      { tag: "Scenic Garden Lounge", title: "Green Sofa Lounge & Cane Drawers" },
+      { tag: "Lush Window View", title: "Staircase Window & Indoor Tropical Garden" },
+      { tag: "Grand Staircase", title: "Crystal Baluster Staircase & Art Statues" },
+      { tag: "Heritage Nook", title: "Heritage Cane Corner Nook & Vintage Lamp" },
+      { tag: "Classic Lounge", title: "Classic Living Lounge & Media Console" },
+      { tag: "Master Suite", title: "Teak & Cane Master Suite" }
+    ];
+
+    const updateCoverflow = (activeIndex) => {
+      if (activeIndex < 0) activeIndex = totalCards - 1;
+      if (activeIndex >= totalCards) activeIndex = 0;
+      currentIndex = activeIndex;
+
+      const cardSpacing = window.innerWidth <= 768 ? 120 : 165;
+
+      cards.forEach((card, i) => {
+        let diff = i - activeIndex;
+
+        // Circular wrapping for clean continuous loop
+        if (diff > totalCards / 2) diff -= totalCards;
+        if (diff < -totalCards / 2) diff += totalCards;
+
+        const absDiff = Math.abs(diff);
+
+        if (diff === 0) {
+          card.style.transform = `translateX(-50%) translateZ(100px) rotateY(0deg) scale(1.06)`;
+          card.style.opacity = '1';
+          card.style.zIndex = '20';
+          card.style.filter = 'none';
+          card.classList.add('active');
+        } else {
+          const sign = diff > 0 ? 1 : -1;
+          const translateX = -50 + (sign * (cardSpacing * Math.pow(absDiff, 0.82)));
+          const rotateY = -sign * (24 + (absDiff - 1) * 14);
+          const translateZ = 30 - (absDiff * 75);
+          const scale = Math.max(0.6, 0.9 - (absDiff - 1) * 0.12);
+          const opacity = Math.max(0.35, 0.95 - (absDiff - 1) * 0.22);
+          const zIndex = 20 - absDiff;
+
+          card.style.transform = `translateX(calc(${translateX.toFixed(1)}%)) translateZ(${translateZ.toFixed(1)}px) rotateY(${rotateY.toFixed(1)}deg) scale(${scale.toFixed(2)})`;
+          card.style.opacity = opacity.toFixed(2);
+          card.style.zIndex = zIndex.toString();
+          card.style.filter = absDiff > 1 ? 'brightness(0.78)' : 'brightness(0.92)';
+          card.classList.remove('active');
+        }
+      });
+
+      if (activeTag && activeHeading && slideInfo[activeIndex]) {
+        activeTag.textContent = slideInfo[activeIndex].tag;
+        activeHeading.textContent = slideInfo[activeIndex].title;
+      }
+
+      dots.forEach((dot, i) => {
+        if (i === activeIndex) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+    };
+
+    const startAutoplay = () => {
+      stopAutoplay();
+      autoplayTimer = setInterval(nextCoverflow, 2500);
+    };
+
+    const stopAutoplay = () => {
+      if (autoplayTimer) clearInterval(autoplayTimer);
+    };
+
+    const resetAutoplayOnInteraction = () => {
+      stopAutoplay();
+      setTimeout(startAutoplay, 3500);
+    };
+
+    cards.forEach((card, i) => {
+      card.addEventListener('click', () => {
+        updateCoverflow(i);
+        resetAutoplayOnInteraction();
+      });
+    });
+
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const idx = parseInt(dot.getAttribute('data-index'), 10);
+        updateCoverflow(idx);
+        resetAutoplayOnInteraction();
+      });
+    });
+
+    const nextCoverflow = () => updateCoverflow(currentIndex + 1);
+    const prevCoverflow = () => updateCoverflow(currentIndex - 1);
+
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+      nextCoverflow();
+      resetAutoplayOnInteraction();
+    });
+
+    if (prevBtn) prevBtn.addEventListener('click', () => {
+      prevCoverflow();
+      resetAutoplayOnInteraction();
+    });
+
+    // Start continuous auto scrolling
+    startAutoplay();
+
+    // Touch Swipe
+    let touchStartX = 0;
+    gallerySection.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    gallerySection.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].screenX;
+      if (touchStartX - touchEndX > 40) {
+        nextCoverflow();
+        resetAutoplayOnInteraction();
+      } else if (touchEndX - touchStartX > 40) {
+        prevCoverflow();
+        resetAutoplayOnInteraction();
+      }
+    }, { passive: true });
+
+    updateCoverflow(0);
+  }
 
 });
