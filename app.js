@@ -1,551 +1,2247 @@
-document.addEventListener('DOMContentLoaded', () => {
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
 
-  // --- 1. Smart Header Scroll (Hide on Scroll Down, Show on Scroll Up & Top) ---
-  const header = document.querySelector('header');
-  let lastScrollY = window.scrollY;
+:root {
+  /* Color Palette */
+  --color-bg-light: #FDFBF7;
+  --color-bg-alt: #F5F1E9;
+  --color-bg-dark: #191C21;
+  --color-primary: #C5A059;
+  --color-primary-hover: #AB8541;
+  --color-text-main: #2A2E33;
+  --color-text-muted: #626A74;
+  --color-text-light: #FAF8F5;
+  --color-border: #E8E2D5;
+  
+  /* Fonts */
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'Montserrat', sans-serif;
+  
+  /* Shadows */
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(253, 251, 247, 0.9);
+  --glass-border: rgba(197, 160, 89, 0.15);
+  --glass-blur: blur(12px);
+  
+  /* Layout */
+  --header-height-large: 110px;
+  --header-height-small: 80px;
+  --container-width: 1200px;
+}
 
-  const handleHeaderScroll = () => {
-    const currentScrollY = window.scrollY;
+/* Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-    // 1. First Header (at top of page): always visible, transparent background
-    if (currentScrollY <= 80) {
-      header.classList.remove('nav-hidden');
-      header.classList.remove('navbar-scrolled');
-      lastScrollY = currentScrollY;
-      return;
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-light);
+  color: var(--color-text-main);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Typography */
+h1, h2, h3, h4, .font-serif {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: var(--color-text-main);
+}
+
+h1 {
+  font-size: 3.5rem;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 2.5rem;
+  line-height: 1.3;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 2px;
+  background-color: var(--color-primary);
+}
+
+h3 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+p {
+  margin-bottom: 1.2rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.container {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+section {
+  padding: 8rem 0;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 1rem 2.2rem;
+  border-radius: 0;
+  border: none;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-light);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  letter-spacing: 0.18em;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--color-text-main);
+  border: 1px solid var(--color-primary);
+}
+
+.btn-outline:hover {
+  background-color: var(--color-primary);
+  color: var(--color-text-light);
+}
+
+/* =============================================
+   Header & Nav — Liquid Style
+   ============================================= */
+
+@keyframes liquid-shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: auto;
+  padding: 1rem 2rem;
+  z-index: 1000;
+  transform: translateY(0);
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), padding 0.4s ease;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+}
+
+header.nav-hidden {
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
+header.navbar-transparent { background: transparent; }
+header.navbar-scrolled     { background: transparent; }
+
+header.navbar-scrolled .header-container {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(197, 160, 89, 0.3);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+header.navbar-scrolled .logo,
+header.navbar-scrolled .nav-links a {
+  color: var(--color-text-main);
+}
+
+header.navbar-scrolled .btn-nav {
+  border-color: var(--color-primary);
+  color: var(--color-text-main);
+}
+
+/* Liquid pill container */
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1400px;
+  gap: 2rem;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 100px;
+  padding: 0.7rem 0.8rem 0.7rem 2rem;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition: background 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+  overflow: hidden;
+}
+
+/* Animated liquid shimmer border */
+.header-container::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 100px;
+  background: linear-gradient(
+    120deg,
+    rgba(197, 160, 89, 0) 0%,
+    rgba(197, 160, 89, 0.6) 30%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(197, 160, 89, 0.6) 70%,
+    rgba(197, 160, 89, 0) 100%
+  );
+  background-size: 250% 250%;
+  animation: liquid-shimmer 4s ease infinite;
+  pointer-events: none;
+  z-index: 0;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 1px;
+}
+
+/* Inner gloss highlight */
+.header-container::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 48%;
+  border-radius: 100px 100px 0 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.logo {
+  font-family: var(--font-serif);
+  font-size: clamp(1.2rem, 1.8vw, 1.8rem);
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  color: var(--color-text-light);
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.logo span {
+  font-weight: 300;
+  color: var(--color-primary);
+  margin-left: 0.15em;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1.5vw, 2rem);
+  position: relative;
+  z-index: 2;
+}
+
+/* Morphing liquid blob that follows hovered nav items */
+.nav-liquid-blob {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  height: 2rem;
+  width: 80px;
+  background: linear-gradient(
+    135deg,
+    rgba(197, 160, 89, 0.38) 0%,
+    rgba(255, 220, 140, 0.28) 50%,
+    rgba(197, 160, 89, 0.32) 100%
+  );
+  border-radius: 50px;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    left   0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width  0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.25s ease;
+  border: 1px solid rgba(197, 160, 89, 0.4);
+  z-index: 1;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: clamp(0.1rem, 0.5vw, 0.3rem);
+  position: relative;
+}
+
+.nav-links a {
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--color-text-light);
+  position: relative;
+  padding: 0.45rem 0.9rem;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+  border-radius: 50px;
+  z-index: 2;
+}
+
+.nav-links a::after { display: none; }
+
+.nav-links a:hover {
+  color: var(--color-primary);
+}
+
+.btn-nav {
+  border: 1px solid rgba(197, 160, 89, 0.7);
+  color: var(--color-text-light);
+  padding: 0.55rem 1.4rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 50px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(197, 160, 89, 0.15);
+  backdrop-filter: blur(6px);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.btn-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50px;
+  background: var(--color-primary);
+  transform: scale(0);
+  transform-origin: center;
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: -1;
+}
+
+.btn-nav:hover {
+  color: #fff;
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 20px rgba(197, 160, 89, 0.45);
+  transform: scale(1.04);
+}
+
+.btn-nav:hover::before {
+  transform: scale(1);
+}
+
+.mobile-nav-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 30px;
+  height: 20px;
+  position: relative;
+  z-index: 1100;
+}
+
+.mobile-nav-toggle span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-text-light);
+  position: absolute;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.mobile-nav-toggle span:nth-child(1) { top: 0; }
+.mobile-nav-toggle span:nth-child(2) { top: 9px; }
+.mobile-nav-toggle span:nth-child(3) { top: 18px; }
+
+header.navbar-scrolled .mobile-nav-toggle span {
+  background-color: var(--color-text-main);
+}
+
+/* Hero Section */
+.hero {
+  height: 260vh;
+  position: relative;
+  padding: 0;
+  background: linear-gradient(180deg, #4aa6e8 0%, #68bdf4 35%, #8cd4fe 70%, #b3e3ff 100%);
+}
+
+.hero-scene {
+  --hero-progress: 0;
+  --hero-rise: 0;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-light);
+  text-align: center;
+  padding-top: var(--header-height-large);
+  isolation: isolate;
+}
+
+.hero-scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(74, 166, 232, 0.15) 0%, rgba(255, 255, 255, 0.05) 45%, rgba(0, 0, 0, 0.3) 100%);
+  pointer-events: none;
+}
+
+.hero-sky-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-color: #68bdf4;
+  background-image: url('images/hero-sky.png');
+  background-position: center center;
+  background-size: cover;
+  transform: translate3d(0, calc(var(--hero-rise) * 6vh), 0) scale(calc(1.05 + (var(--hero-rise) * 0.03)));
+  transform-origin: center bottom;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Big Title Text Wrapper (Positioned BEHIND Villa cut-out layer) */
+.hero-title-wrapper {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate3d(-50%, calc(-50% - (var(--hero-rise) * 16vh)), 0);
+  z-index: 2;
+  width: 92%;
+  max-width: 1150px;
+  text-align: center;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.hero-subtitle {
+  display: block;
+  font-size: clamp(1.2rem, 2.4vw, 1.75rem);
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin-bottom: 0.8rem;
+  font-weight: 700;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
+.hero h1 {
+  font-size: clamp(3.5rem, 6.8vw, 6.2rem);
+  line-height: 1.08;
+  color: #FFFFFF;
+  font-weight: 700;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.35);
+  letter-spacing: -0.01em;
+}
+
+/* Villa Cutout Image Layer (Rises from bottom on scroll) */
+.hero-house-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background-image: url('images/hero-house-parallax.png');
+  background-size: cover;
+  background-position: center bottom;
+  transform: translate3d(0, calc(68vh - (var(--hero-rise) * 68vh)), 0);
+  transform-origin: center bottom;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Scroll Reveal Subcontent & Action Buttons (Fade in on scroll) */
+.hero-subcontent {
+  position: relative;
+  z-index: 10;
+  max-width: 820px;
+  padding: 1rem 2rem;
+  margin-top: 22vh;
+  text-align: center;
+  will-change: opacity, transform;
+}
+
+.hero-desc {
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  font-weight: 300;
+  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto 2.2rem;
+  color: #FFFFFF;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8), 0 4px 24px rgba(0, 0, 0, 0.6);
+  opacity: var(--hero-desc-opacity, 0);
+  transform: translate3d(0, calc((1 - var(--hero-desc-opacity, 0)) * 30px), 0);
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  opacity: var(--hero-actions-opacity, 0);
+  transform: translate3d(0, calc((1 - var(--hero-actions-opacity, 0)) * 30px), 0);
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.btn-hero-book {
+  color: var(--color-text-light);
+  border-color: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.hero-scroll-hint {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  opacity: max(0, calc(1 - (var(--hero-rise) * 1.4)));
+  transition: color 0.3s ease;
+  z-index: 1;
+}
+
+.hero-scroll-hint:hover {
+  color: var(--color-primary);
+}
+
+.hero-scroll-hint svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-8px); }
+  60% { transform: translateY(-4px); }
+}
+
+/* About / Intro Section */
+.intro-text-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.intro-text-wrapper .sub {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.6rem;
+  color: var(--color-primary);
+  margin-bottom: 1.5rem;
+}
+
+.intro-text-wrapper p {
+  font-size: 1.15rem;
+  color: var(--color-text-main);
+  font-weight: 300;
+  line-height: 1.8;
+}
+
+/* Scroll Entry & Exit Effects */
+@supports ((animation-timeline: view()) and (animation-range: entry)) {
+  @keyframes reveal-up {
+    from {
+      opacity: 0;
+      transform: translateY(60px);
     }
-
-    // 2. Scrolled past top: add scrolled background styling
-    header.classList.add('navbar-scrolled');
-
-    // 3. Scrolling Down: Hide the navbar
-    if (currentScrollY > lastScrollY && currentScrollY > 120) {
-      header.classList.add('nav-hidden');
-    } 
-    // 4. Scrolling Up: Show the navbar again
-    else if (currentScrollY < lastScrollY) {
-      header.classList.remove('nav-hidden');
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
-
-    lastScrollY = currentScrollY;
-  };
-
-  window.addEventListener('scroll', handleHeaderScroll, { passive: true });
-  handleHeaderScroll(); // Initialize state
-
-  // --- 1b. Hero Parallax ---
-  const hero = document.querySelector('.hero');
-  const heroScene = document.querySelector('.hero-scene');
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-  if (hero && heroScene && !reduceMotion.matches) {
-    let parallaxTicking = false;
-
-    const updateHeroParallax = () => {
-      const heroRect = hero.getBoundingClientRect();
-      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-
-      if (heroRect.bottom >= 0 && heroRect.top <= viewportHeight) {
-        const scrollableDistance = Math.max(hero.offsetHeight - viewportHeight, 1);
-        const rawProgress = Math.min(Math.max(-heroRect.top / scrollableDistance, 0), 1);
-        
-        // Complete the villa landing at 85% of scroll so it locks into place before the body scrolls in
-        const progress = Math.min(rawProgress / 0.85, 1);
-        const rise = 1 - Math.pow(1 - progress, 2.2);
-        
-        heroScene.style.setProperty('--hero-progress', progress.toFixed(4));
-        heroScene.style.setProperty('--hero-rise', rise.toFixed(4));
-
-        // Staggered fade-in reveals for description paragraph and buttons when scrolling down
-        const descOpacity = Math.min(Math.max((rise - 0.22) / 0.4, 0), 1);
-        const actionsOpacity = Math.min(Math.max((rise - 0.42) / 0.4, 0), 1);
-        heroScene.style.setProperty('--hero-desc-opacity', descOpacity.toFixed(4));
-        heroScene.style.setProperty('--hero-actions-opacity', actionsOpacity.toFixed(4));
-      }
-
-      parallaxTicking = false;
-    };
-
-    const requestHeroParallax = () => {
-      if (!parallaxTicking) {
-        window.requestAnimationFrame(updateHeroParallax);
-        parallaxTicking = true;
-      }
-    };
-
-    window.addEventListener('scroll', requestHeroParallax, { passive: true });
-    window.addEventListener('resize', requestHeroParallax);
-    updateHeroParallax();
   }
 
+  .reveal-effect {
+    animation: reveal-up auto linear both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 30%;
+  }
+}
 
-  // --- 2. Scroll Entry/Exit ViewTimeline Fallback ---
-  const checkViewSupport = () => {
-    return CSS.supports('(animation-timeline: view()) and (animation-range: entry)');
-  };
+/* Standard scroll class fallback for IntersectionObserver */
+.reveal-effect-active {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
-  if (!checkViewSupport()) {
-    // IntersectionObserver fallback for fade-in animations
-    const revealElements = document.querySelectorAll('.reveal-effect');
-    const observerOptions = {
-      root: null,
-      threshold: 0.15,
-      rootMargin: '0px 0px -80px 0px'
-    };
+.js-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+}
 
-    const revealObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('reveal-effect-active');
-          revealObserver.unobserve(entry.target);
-        }
-      });
-    }, observerOptions);
-
-    revealElements.forEach(el => {
-      el.classList.add('js-reveal');
-      revealObserver.observe(el);
-    });
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    height: 100vh;
   }
 
-
-  // --- 3. Mobile Hamburger Menu Toggle ---
-  const mobileToggle = document.querySelector('.mobile-nav-toggle');
-  const navMenu = document.querySelector('nav');
-
-  if (mobileToggle && navMenu) {
-    mobileToggle.addEventListener('click', () => {
-      navMenu.classList.toggle('active');
-      mobileToggle.classList.toggle('active');
-
-      const spans = mobileToggle.querySelectorAll('span');
-      if (mobileToggle.classList.contains('active')) {
-        spans[0].style.transform = 'rotate(45deg) translate(6px, 6px)';
-        spans[1].style.opacity = '0';
-        spans[2].style.transform = 'rotate(-45deg) translate(6px, -7px)';
-      } else {
-        spans[0].style.transform = 'none';
-        spans[1].style.opacity = '1';
-        spans[2].style.transform = 'none';
-      }
-    });
-
-    // Close mobile menu when clicking a link
-    navMenu.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        if (navMenu.classList.contains('active')) {
-          navMenu.classList.remove('active');
-          mobileToggle.classList.remove('active');
-          const spans = mobileToggle.querySelectorAll('span');
-          spans[0].style.transform = 'none';
-          spans[1].style.opacity = '1';
-          spans[2].style.transform = 'none';
-        }
-      });
-    });
+  .hero-scene {
+    position: relative;
   }
 
-
-  // --- 4. Villa Showcase Carousel (Slicing Spaces) ---
-  const track = document.querySelector('.villas-track');
-  const cards = document.querySelectorAll('.villa-card');
-  const prevBtn = document.querySelector('.villas-nav-btn.prev');
-  const nextBtn = document.querySelector('.villas-nav-btn.next');
-
-  if (track && cards.length > 0 && prevBtn && nextBtn) {
-    let index = 0;
-
-    const getCardsPerView = () => {
-      if (window.innerWidth <= 768) return 1;
-      if (window.innerWidth <= 1024) return 2;
-      return 3;
-    };
-
-    const updateCarousel = () => {
-      const cardsPerView = getCardsPerView();
-      const maxIndex = Math.max(0, cards.length - cardsPerView);
-      if (index > maxIndex) index = maxIndex;
-      if (index < 0) index = 0;
-
-      const cardWidth = cards[0].getBoundingClientRect().width;
-      const gap = parseFloat(window.getComputedStyle(track).gap) || 0;
-      const amountToMove = (cardWidth + gap) * index;
-
-      track.style.transform = `translateX(-${amountToMove}px)`;
-
-      // Update button opacity
-      prevBtn.style.opacity = index === 0 ? '0.3' : '1';
-      prevBtn.style.cursor = index === 0 ? 'default' : 'pointer';
-      nextBtn.style.opacity = index === maxIndex ? '0.3' : '1';
-      nextBtn.style.cursor = index === maxIndex ? 'default' : 'pointer';
-    };
-
-    nextBtn.addEventListener('click', () => {
-      const cardsPerView = getCardsPerView();
-      if (index < cards.length - cardsPerView) {
-        index++;
-        updateCarousel();
-      }
-    });
-
-    prevBtn.addEventListener('click', () => {
-      if (index > 0) {
-        index--;
-        updateCarousel();
-      }
-    });
-
-    window.addEventListener('resize', updateCarousel);
-    setTimeout(updateCarousel, 150);
+  .hero-sky-bg {
+    transform: none;
+    will-change: auto;
   }
 
-
-  // --- 5. Dynamic Space Details Modal (Dialog) ---
-  const spaceData = {
-    'heritage-salon': {
-      name: "The Heritage Cane Salon",
-      location: "Banjara Hills",
-      tag: "Ground Floor Salon",
-      dimensions: "950 sq. ft.",
-      image: "images/salon.jpg",
-      desc: "A beautifully styled heritage living salon featuring signature woven cane armchairs, a premium vintage Persian area rug, polished marble floors, and an arched door leading to the gardens. This space radiates old-world warmth, perfect for intimate conversations and reading.",
-      amenities: ["Bespoke Cane Armchairs", "Vintage Persian Rug", "Arched Doorways", "Polished Marble Floor", "Courtyard Views", "Ambient Warm Lighting"]
-    },
-    'classic-lounge': {
-      name: "The Classic Living Lounge",
-      location: "Banjara Hills",
-      tag: "Main Lounge",
-      dimensions: "1,200 sq. ft.",
-      image: "images/lounge.jpg",
-      desc: "The primary living lounge of the cabin, designed for family gathering and entertainment. It features comfortable beige fabric sofa sets, a central solid teak coffee table, custom wooden media consoles, soft cream drapes, and smart temperature controls.",
-      amenities: ["Plush Fabric Sofas", "Teak Coffee Table", "Wood Media Console", "Cream Drapes", "Climate Control (AC)", "Indirect LED Ceiling Lights"]
-    },
-    'stair-landing': {
-      name: "The Staircase Landing Hall",
-      location: "Banjara Hills",
-      tag: "First Floor Transition",
-      dimensions: "600 sq. ft.",
-      image: "images/hallway.jpg",
-      desc: "A bright transition hall connecting the private bedrooms on the first floor. It features a custom-designed black wrought-iron staircase railing, a cozy side couch, polished marble floors, and tall classic timber and glass display cabinets holding selected artifacts.",
-      amenities: ["Wrought-Iron Railing", "Teak Glass Cabinet", "Lounge Couch", "Polished Marble Floor", "First Floor Balcony Access", "Natural Daylighting"]
-    },
-    'scenic-sitting': {
-      name: "The Scenic Sitting Room",
-      location: "Banjara Hills",
-      tag: "Garden Sitting Area",
-      dimensions: "850 sq. ft.",
-      image: "images/sitting.jpg",
-      desc: "A peaceful private sitting room separated by a classic white-paneled window frame partition. Equipped with comfortable olive-green fabric sofa seating, French timber-and-glass doors opening directly to the private garden balcony, and polished marble flooring.",
-      amenities: ["Paneled Glass Partition", "Green Sofa Seating", "French Timber Doors", "Polished Marble Floor", "Lakeside Balcony Access", "Private Seclusion"]
-    }
-  };
-
-  const dialogOverlay = document.querySelector('.dialog-overlay');
-  const dialogClose = document.querySelector('.dialog-close');
-
-  if (dialogOverlay && dialogClose) {
-    document.querySelectorAll('.explore-space-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const spaceId = btn.getAttribute('data-space-id');
-        const space = spaceData[spaceId];
-
-        if (space) {
-          // Populate details
-          dialogOverlay.querySelector('.villa-loc').textContent = `${space.location} • ${space.tag}`;
-          dialogOverlay.querySelector('.dialog-header h2').textContent = space.name;
-          const modalImg = dialogOverlay.querySelector('.dialog-image img');
-          modalImg.classList.remove('loaded');
-          modalImg.src = space.image;
-          modalImg.alt = space.name;
-          if (modalImg.complete) {
-            modalImg.classList.add('loaded');
-          } else {
-            modalImg.onload = () => {
-              modalImg.classList.add('loaded');
-            };
-            modalImg.onerror = () => {
-              modalImg.classList.add('loaded');
-            };
-          }
-          dialogOverlay.querySelector('.dialog-features p').textContent = space.desc;
-          
-          // Re-label Price to Dimensions
-          dialogOverlay.querySelector('.dialog-price span.label').textContent = "Dimensions";
-          dialogOverlay.querySelector('.dialog-price .value').textContent = space.dimensions;
-
-          // Render amenities list
-          const list = dialogOverlay.querySelector('.dialog-amenities-list');
-          list.innerHTML = '';
-          space.amenities.forEach(amenity => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-              <svg viewBox="0 0 24 24" width="16" height="16">
-                <path fill="#C5A059" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
-              <span>${amenity}</span>
-            `;
-            list.appendChild(li);
-          });
-
-          // Show modal
-          dialogOverlay.classList.add('active');
-          document.body.style.overflow = 'hidden'; // Lock background scroll
-        }
-      });
-    });
-
-    const closeModal = () => {
-      dialogOverlay.classList.remove('active');
-      document.body.style.overflow = 'auto'; // Unlock background scroll
-    };
-
-    dialogClose.addEventListener('click', closeModal);
-    dialogOverlay.addEventListener('click', (e) => {
-      if (e.target === dialogOverlay) {
-        closeModal();
-      }
-    });
-
-    // Close on Escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && dialogOverlay.classList.contains('active')) {
-        closeModal();
-      }
-    });
+  .hero-house-layer {
+    inset: 0;
+    transform: none;
+    will-change: auto;
   }
 
-
-  // --- 6. Booking Inquiry Form Validation ---
-  const bookingForm = document.querySelector('.booking-form');
-  const feedback = document.querySelector('.form-feedback');
-
-  if (bookingForm && feedback) {
-    bookingForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const name = document.getElementById('book-name').value.trim();
-      const email = document.getElementById('book-email').value.trim();
-      const guests = document.getElementById('book-guests').value;
-
-      if (name && email) {
-        feedback.textContent = `Thank you, ${name}! Your booking inquiry for a luxury stay with ${guests} guests at Waterfront Cabin, Banjara Hills has been submitted. Our guest relationships team will contact you shortly.`;
-        feedback.className = 'form-feedback success';
-        bookingForm.reset();
-        
-        // Scroll feedback into view smoothly
-        feedback.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Show the element in case it was hidden previously
-        feedback.style.display = 'block';
-        
-        // Hide success message after 10 seconds
-        setTimeout(() => {
-          feedback.style.display = 'none';
-        }, 10000);
-      }
-    });
+  .hero-content,
+  .hero-scroll-hint {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
   }
+}
 
+/* Estate Spaces Section */
+.spaces-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
+  margin-top: 4rem;
+}
 
-  // --- 7. Smooth scrolling for internal anchor links ---
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
-      const targetId = this.getAttribute('href');
-      if (targetId === '#') return;
-      
-      const targetElement = document.querySelector(targetId);
-      if (targetElement) {
-        e.preventDefault();
-        
-        // Get header height to offset scroll
-        const offset = 80; // height of sticky bar
-        
-        const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
-        const offsetPosition = elementPosition - offset;
-        
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        });
-      }
-    });
-  });
+.space-card {
+  height: 480px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 2.5rem;
+  color: var(--color-text-light);
+  text-decoration: none;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
 
+.space-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.1) 100%);
+  z-index: 1;
+  transition: opacity 0.4s ease;
+}
 
-  // --- 8. Skeleton Loader Image Fade-in ---
-  const mediaElements = document.querySelectorAll('img, .space-bg');
-  mediaElements.forEach(el => {
-    if (el.closest('.dialog-overlay')) return; // Handled dynamically on modal open
-    
-    if (el.tagName === 'IMG') {
-      if (el.complete) {
-        el.classList.add('loaded');
-      } else {
-        el.addEventListener('load', () => {
-          el.classList.add('loaded');
-        });
-        el.addEventListener('error', () => {
-          el.classList.add('loaded');
-        });
-      }
-    } else {
-      const bgStyle = window.getComputedStyle(el).backgroundImage;
-      const match = bgStyle.match(/url\(['"]?(.*?)['"]?\)/);
-      if (match && match[1]) {
-        const tempImg = new Image();
-        tempImg.src = match[1];
-        tempImg.onload = () => {
-          el.classList.add('loaded');
-        };
-        tempImg.onerror = () => {
-          el.classList.add('loaded');
-        };
-      } else {
-        el.classList.add('loaded');
-      }
-    }
-  });
+.space-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
-  // --- 9. Villa 3D Perspective Coverflow Gallery ---
-  const gallerySection = document.querySelector('#gallery-slider');
-  if (gallerySection) {
-    const cards = gallerySection.querySelectorAll('.coverflow-card');
-    const dots = gallerySection.querySelectorAll('.dot-btn');
-    const prevBtn = gallerySection.querySelector('.prev-btn');
-    const nextBtn = gallerySection.querySelector('.next-btn');
-    const activeTag = gallerySection.querySelector('.active-tag');
-    const activeHeading = gallerySection.querySelector('.active-heading');
-    let currentIndex = 0;
-    let autoplayTimer = null;
-    const totalCards = cards.length;
+.space-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
 
-    const slideInfo = [
-      { tag: "Beige Living Salon", title: "Classic Living Salon & Persian Area Rug" },
-      { tag: "Scenic Garden Lounge", title: "Green Sofa Lounge & Cane Drawers" },
-      { tag: "Lush Window View", title: "Staircase Window & Indoor Tropical Garden" },
-      { tag: "Grand Staircase", title: "Crystal Baluster Staircase & Art Statues" },
-      { tag: "Heritage Nook", title: "Heritage Cane Corner Nook & Vintage Lamp" },
-      { tag: "Classic Lounge", title: "Classic Living Lounge & Media Console" },
-      { tag: "Master Suite", title: "Teak & Cane Master Suite" }
-    ];
+.space-card:hover .space-bg {
+  transform: scale(1.08);
+}
 
-    const updateCoverflow = (activeIndex) => {
-      if (activeIndex < 0) activeIndex = totalCards - 1;
-      if (activeIndex >= totalCards) activeIndex = 0;
-      currentIndex = activeIndex;
+.space-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
 
-      const cardSpacing = window.innerWidth <= 768 ? 120 : 165;
+.space-tag {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
 
-      cards.forEach((card, i) => {
-        let diff = i - activeIndex;
+.space-card h3 {
+  color: var(--color-text-light);
+  margin-bottom: 0.5rem;
+}
 
-        // Circular wrapping for clean continuous loop
-        if (diff > totalCards / 2) diff -= totalCards;
-        if (diff < -totalCards / 2) diff += totalCards;
+.space-desc {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-bottom: 1.5rem;
+  font-weight: 300;
+}
 
-        const absDiff = Math.abs(diff);
+.space-link {
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-light);
+  font-weight: 500;
+}
 
-        if (diff === 0) {
-          card.style.transform = `translateX(-50%) translateZ(100px) rotateY(0deg) scale(1.06)`;
-          card.style.opacity = '1';
-          card.style.zIndex = '20';
-          card.style.filter = 'none';
-          card.classList.add('active');
-        } else {
-          const sign = diff > 0 ? 1 : -1;
-          const translateX = -50 + (sign * (cardSpacing * Math.pow(absDiff, 0.82)));
-          const rotateY = -sign * (24 + (absDiff - 1) * 14);
-          const translateZ = 30 - (absDiff * 75);
-          const scale = Math.max(0.6, 0.9 - (absDiff - 1) * 0.12);
-          const opacity = Math.max(0.35, 0.95 - (absDiff - 1) * 0.22);
-          const zIndex = 20 - absDiff;
+.space-link svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  transition: transform 0.3s ease;
+}
 
-          card.style.transform = `translateX(calc(${translateX.toFixed(1)}%)) translateZ(${translateZ.toFixed(1)}px) rotateY(${rotateY.toFixed(1)}deg) scale(${scale.toFixed(2)})`;
-          card.style.opacity = opacity.toFixed(2);
-          card.style.zIndex = zIndex.toString();
-          card.style.filter = absDiff > 1 ? 'brightness(0.78)' : 'brightness(0.92)';
-          card.classList.remove('active');
-        }
-      });
+.space-card:hover .space-link svg {
+  transform: translateX(5px);
+}
 
-      if (activeTag && activeHeading && slideInfo[activeIndex]) {
-        activeTag.textContent = slideInfo[activeIndex].tag;
-        activeHeading.textContent = slideInfo[activeIndex].title;
-      }
+/* 6 Pillars Section */
+.pillars {
+  background-color: var(--color-bg-alt);
+}
 
-      dots.forEach((dot, i) => {
-        if (i === activeIndex) {
-          dot.classList.add('active');
-        } else {
-          dot.classList.remove('active');
-        }
-      });
-    };
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+  margin-top: 4rem;
+}
 
-    const startAutoplay = () => {
-      stopAutoplay();
-      autoplayTimer = setInterval(nextCoverflow, 2500);
-    };
+.pillar-card {
+  background-color: var(--color-bg-light);
+  padding: 3rem 2.5rem;
+  border-top: 3px solid transparent;
+  transition: border-color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+  box-shadow: var(--shadow-sm);
+}
 
-    const stopAutoplay = () => {
-      if (autoplayTimer) clearInterval(autoplayTimer);
-    };
+.pillar-card:hover {
+  border-top-color: var(--color-primary);
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
 
-    const resetAutoplayOnInteraction = () => {
-      stopAutoplay();
-      setTimeout(startAutoplay, 3500);
-    };
+.pillar-icon-wrapper {
+  color: var(--color-primary);
+  margin-bottom: 1.5rem;
+  display: flex;
+}
 
-    cards.forEach((card, i) => {
-      card.addEventListener('click', () => {
-        updateCoverflow(i);
-        resetAutoplayOnInteraction();
-      });
-    });
+.pillar-icon-wrapper svg {
+  width: 42px;
+  height: 42px;
+}
 
-    dots.forEach((dot) => {
-      dot.addEventListener('click', () => {
-        const idx = parseInt(dot.getAttribute('data-index'), 10);
-        updateCoverflow(idx);
-        resetAutoplayOnInteraction();
-      });
-    });
+.pillar-card h3 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
 
-    const nextCoverflow = () => updateCoverflow(currentIndex + 1);
-    const prevCoverflow = () => updateCoverflow(currentIndex - 1);
+.pillar-card p {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
 
-    if (nextBtn) nextBtn.addEventListener('click', () => {
-      nextCoverflow();
-      resetAutoplayOnInteraction();
-    });
+/* Location Details Wrapper */
+.location-details-wrapper {
+  margin-top: 5rem;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 4rem;
+  align-items: center;
+  background-color: var(--color-bg-alt);
+  padding: 4rem;
+  box-shadow: var(--shadow-sm);
+}
 
-    if (prevBtn) prevBtn.addEventListener('click', () => {
-      prevCoverflow();
-      resetAutoplayOnInteraction();
-    });
+.location-tag {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
 
-    // Start continuous auto scrolling
-    startAutoplay();
+.location-heading {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
 
-    // Touch Swipe
-    let touchStartX = 0;
-    gallerySection.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
+.location-heading::after {
+  content: none !important;
+}
 
-    gallerySection.addEventListener('touchend', (e) => {
-      const touchEndX = e.changedTouches[0].screenX;
-      if (touchStartX - touchEndX > 40) {
-        nextCoverflow();
-        resetAutoplayOnInteraction();
-      } else if (touchEndX - touchStartX > 40) {
-        prevCoverflow();
-        resetAutoplayOnInteraction();
-      }
-    }, { passive: true });
+.location-desc {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-bottom: 0;
+}
 
-    updateCoverflow(0);
+.location-address-col {
+  border-left: 1px solid var(--color-border);
+  padding-left: 4rem;
+}
+
+.address-heading {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+  color: var(--color-text-main);
+}
+
+.address-text {
+  color: var(--color-text-main);
+  font-weight: 500;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.btn-maps {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Utilities Section */
+.utilities {
+  background-color: var(--color-bg-alt);
+}
+
+.utilities-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+  margin-top: 4rem;
+}
+
+.utility-card {
+  background-color: var(--color-bg-light);
+  padding: 3rem 2.5rem;
+  border-top: 3px solid transparent;
+  transition: border-color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.utility-card:hover {
+  border-top-color: var(--color-primary);
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.utility-icon {
+  color: var(--color-primary);
+  margin-bottom: 1.5rem;
+  display: flex;
+}
+
+.utility-icon svg {
+  width: 42px;
+  height: 42px;
+}
+
+.utility-card h3 {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+
+.utility-card p {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+/* Featured Villas */
+.villas-carousel-container {
+  position: relative;
+  margin-top: 4rem;
+  overflow: hidden;
+}
+
+.villas-track {
+  display: flex;
+  gap: 2.5rem;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.villa-card {
+  flex: 0 0 calc((100% - 5rem) / 3);
+  background-color: var(--color-bg-light);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.villa-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.villa-image-wrapper {
+  height: 280px;
+  position: relative;
+  overflow: hidden;
+}
+
+.villa-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.villa-card:hover .villa-image-wrapper img {
+  transform: scale(1.05);
+}
+
+.villa-tag {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background-color: var(--color-primary);
+  color: var(--color-text-light);
+  padding: 0.4rem 1rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  z-index: 5;
+}
+
+.villa-details {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.villa-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.75rem;
+}
+
+.villa-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.villa-meta-item svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.villa-card h3 {
+  font-size: 1.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.villa-card h3 a {
+  color: var(--color-text-main);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.villa-card h3 a:hover {
+  color: var(--color-primary);
+}
+
+.villa-desc {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+}
+
+.villa-amenities-icons {
+  display: flex;
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 1rem;
+}
+
+.villa-amenity-tooltip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.villa-amenity-tooltip:hover {
+  color: var(--color-primary);
+}
+
+.villa-amenity-tooltip svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.villa-amenity-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-light);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 10;
+}
+
+.villa-amenity-tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-8px);
+}
+
+.villas-carousel-nav {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.villas-nav-btn {
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.villas-nav-btn:hover {
+  background-color: var(--color-primary);
+  color: var(--color-text-light);
+}
+
+.villas-nav-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* Experience Highlight Section */
+.experience-split {
+  display: flex;
+  align-items: center;
+  gap: 5rem;
+}
+
+.experience-content {
+  flex: 1;
+}
+
+.experience-content .tag {
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+  display: block;
+  font-weight: 600;
+}
+
+.experience-content h2 {
+  text-align: left;
+  padding-bottom: 0;
+  margin-bottom: 2rem;
+}
+
+.experience-content h2::after {
+  display: none;
+}
+
+.experience-content p {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin-bottom: 2rem;
+}
+
+.experience-bullets {
+  list-style: none;
+  margin-bottom: 2.5rem;
+}
+
+.experience-bullets li {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.experience-bullets li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--color-primary);
+  font-weight: bold;
+}
+
+.experience-media {
+  flex: 1;
+  height: 520px;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+
+.experience-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.experience-media-badge {
+  position: absolute;
+  bottom: -2rem;
+  left: -2rem;
+  background-color: var(--color-primary);
+  color: var(--color-text-light);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-md);
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.experience-media-badge span.num {
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.experience-media-badge span.txt {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+
+/* Booking Section */
+.booking-section {
+  background-image: linear-gradient(rgba(25, 28, 33, 0.85), rgba(25, 28, 33, 0.85)), url('images/booking_bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: var(--color-text-light);
+}
+
+.booking-section h2 {
+  color: var(--color-text-light);
+}
+
+.booking-container {
+  max-width: 800px;
+  margin: 4rem auto 0;
+  background-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.booking-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.form-group-full {
+  grid-column: span 2;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 1rem;
+  color: var(--color-text-light);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.form-group select option {
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-light);
+}
+
+.booking-form button {
+  grid-column: span 2;
+  margin-top: 1rem;
+}
+
+.form-feedback {
+  grid-column: span 2;
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+  display: none;
+  font-weight: 500;
+}
+
+.form-feedback.success {
+  background-color: rgba(197, 160, 89, 0.2);
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  display: block;
+}
+
+/* Footer */
+footer {
+  background-color: var(--color-bg-dark);
+  color: rgba(255, 255, 255, 0.65);
+  padding: 6rem 0 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4rem;
+  margin-bottom: 5rem;
+}
+
+.footer-col h4 {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+.footer-about .logo {
+  color: var(--color-text-light);
+  display: inline-block;
+  margin-bottom: 1.5rem;
+}
+
+.footer-about p {
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+
+.footer-links {
+  list-style: none;
+}
+
+.footer-links li {
+  margin-bottom: 1rem;
+}
+
+.footer-links a {
+  color: rgba(255, 255, 255, 0.65);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: var(--color-primary);
+}
+
+.footer-contact p {
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.footer-contact svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.footer-newsletter p {
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.newsletter-form {
+  display: flex;
+}
+
+.newsletter-form input {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.8rem 1rem;
+  color: var(--color-text-light);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  width: 100%;
+}
+
+.newsletter-form input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.newsletter-form button {
+  background-color: var(--color-primary);
+  border: none;
+  color: var(--color-text-light);
+  padding: 0 1.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.newsletter-form button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.footer-socials {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.footer-socials a {
+  color: rgba(255, 255, 255, 0.65);
+  transition: color 0.3s ease;
+}
+
+.footer-socials a:hover {
+  color: var(--color-primary);
+}
+
+.footer-socials svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+/* Modal Dialog */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(25, 28, 33, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dialog-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.dialog-box {
+  background-color: var(--color-bg-light);
+  width: 90%;
+  max-width: 700px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+  position: relative;
+  transform: scale(0.9);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.dialog-overlay.active .dialog-box {
+  transform: scale(1);
+}
+
+.dialog-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-main);
+  transition: color 0.3s ease;
+  z-index: 10;
+}
+
+.dialog-close:hover {
+  color: var(--color-primary);
+}
+
+.dialog-close svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.dialog-body {
+  overflow-y: auto;
+  padding: 4rem;
+}
+
+.dialog-header {
+  margin-bottom: 2rem;
+}
+
+.dialog-header h2 {
+  text-align: left;
+  padding-bottom: 0;
+  margin-bottom: 0.5rem;
+}
+
+.dialog-header h2::after {
+  display: none;
+}
+
+.dialog-header .villa-loc {
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.dialog-image {
+  height: 300px;
+  width: 100%;
+  margin-bottom: 2.5rem;
+}
+
+.dialog-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dialog-info-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 3rem;
+  margin-bottom: 2.5rem;
+}
+
+.dialog-features h4,
+.dialog-amenities h4 {
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.dialog-features p {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.dialog-amenities-list {
+  list-style: none;
+}
+
+.dialog-amenities-list li {
+  font-size: 0.9rem;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.dialog-amenities-list li svg {
+  width: 16px;
+  height: 16px;
+  fill: var(--color-primary);
+}
+
+.dialog-footer {
+  border-top: 1px solid var(--color-border);
+  padding-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dialog-price {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-price span.label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+}
+
+.dialog-price span.value {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  color: var(--color-text-main);
+  font-weight: 600;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+  section {
+    padding: 6rem 0;
   }
+  
+  h1 {
+    font-size: 2.8rem;
+  }
+  
+  h2 {
+    font-size: 2.2rem;
+  }
+  
+  .spaces-grid {
+    gap: 1.5rem;
+  }
+  
+  .space-card {
+    height: 400px;
+    padding: 1.5rem;
+  }
+  
+  .pillars-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+  
+  .villa-card {
+    flex: 0 0 calc((100% - 2.5rem) / 2);
+  }
+  
+  .experience-split {
+    flex-direction: column;
+    gap: 3rem;
+  }
+  
+  .experience-media {
+    width: 100%;
+    height: 400px;
+  }
+  
+  .experience-media-badge {
+    bottom: -1rem;
+    left: 1rem;
+    padding: 1.5rem;
+  }
+  
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
+  }
+  
+  .utilities-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+  
+  .location-details-wrapper {
+    gap: 3rem;
+    padding: 3rem;
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+  
+  .location-address-col {
+    padding-left: 3rem;
+  }
+}
 
-});
+@media (max-width: 1024px) {
+  header {
+    height: var(--header-height-small);
+    background-color: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .logo, .nav-links a {
+    color: var(--color-text-main) !important;
+    animation: none !important;
+  }
+  
+  .btn-nav {
+    border-color: var(--color-primary) !important;
+    color: var(--color-text-main) !important;
+    animation: none !important;
+  }
+  
+  .mobile-nav-toggle {
+    display: block;
+  }
+  
+  .mobile-nav-toggle span {
+    background-color: var(--color-text-main) !important;
+  }
+  
+  nav {
+    position: fixed;
+    top: var(--header-height-small);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-bg-light);
+    flex-direction: column;
+    padding: 4rem 2rem;
+    gap: 3rem;
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 999;
+    border-top: 1px solid var(--color-border);
+  }
+  
+  nav.active {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .nav-links {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+  
+  .nav-links a {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  
+  .spaces-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .space-card {
+    height: 350px;
+  }
+  
+  .pillars-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .villa-card {
+    flex: 0 0 100%;
+  }
+  
+  .booking-container {
+    padding: 2rem;
+  }
+  
+  .booking-form {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-group-full {
+    grid-column: span 1;
+  }
+  
+  .booking-form button {
+    grid-column: span 1;
+  }
+  
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  
+  .footer-bottom {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+  
+  .dialog-body {
+    padding: 2.5rem 1.5rem;
+  }
+  
+  .dialog-info-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .dialog-footer {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+  
+  .dialog-footer .btn {
+    width: 100%;
+  }
+  
+  .utilities-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .location-details-wrapper {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    padding: 2.5rem;
+  }
+  
+  .location-address-col {
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    padding-left: 0;
+    padding-top: 2.5rem;
+  }
+}
+
+/* Skeleton Loading Placeholder Blocks */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.space-card,
+.villa-image-wrapper,
+.experience-media,
+.dialog-image {
+  background: linear-gradient(90deg, var(--color-bg-alt) 25%, var(--color-border) 50%, var(--color-bg-alt) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2s infinite linear;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Base states for smooth fade-in */
+.space-bg,
+.villa-image-wrapper img,
+.experience-media img,
+.dialog-image img {
+  opacity: 0;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Loaded state reveals actual content */
+.space-bg.loaded,
+.villa-image-wrapper img.loaded,
+.experience-media img.loaded,
+.dialog-image img.loaded {
+  opacity: 1;
+}
+
+/* --- Villa Photo Gallery 3D Perspective Arc Coverflow --- */
+.gallery-slider-section {
+  padding: 5rem 0 6rem;
+  background-color: #FFFFFF;
+  overflow: hidden;
+}
+
+.gallery-header {
+  margin-bottom: 2rem;
+}
+
+.gallery-header .sub {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.4rem;
+  color: var(--color-primary);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.gallery-header h2 {
+  margin-bottom: 0;
+}
+
+.coverflow-3d-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 1rem 0;
+}
+
+.coverflow-3d-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coverflow-3d-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.coverflow-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(190px, 24vw, 240px);
+  height: clamp(270px, 34vw, 340px);
+  margin-top: calc(clamp(270px, 34vw, 340px) / -2);
+  border-radius: 22px;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity, filter;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15), 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 22px;
+  overflow: hidden;
+  position: relative;
+  background: #F5F1E9;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.card-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Active Title Display Below */
+.coverflow-active-title {
+  margin-top: 2.2rem;
+}
+
+.active-tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.active-heading {
+  font-family: var(--font-serif);
+  font-size: clamp(1.4rem, 2.2vw, 2rem);
+  color: var(--color-text-main);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Glass Buttons */
+.coverflow-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.coverflow-btn:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #FFFFFF;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 10px 25px rgba(197, 160, 89, 0.4);
+}
+
+.coverflow-btn.prev-btn { left: 0.5rem; }
+.coverflow-btn.next-btn { right: 0.5rem; }
+
+@media (min-width: 768px) {
+  .coverflow-btn.prev-btn { left: 1.5rem; }
+  .coverflow-btn.next-btn { right: 1.5rem; }
+}
+
+/* Dots Indicator Navigation */
+.coverflow-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.dot-btn {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.18);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.dot-btn:hover {
+  background: var(--color-primary-hover);
+}
+
+.dot-btn.active {
+  background: var(--color-primary);
+  width: 28px;
+  border-radius: 10px;
+}
+
+/* =============================================
+   Pricing Section
+   ============================================= */
+.pricing-section {
+  background: var(--color-bg-alt);
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  max-width: 860px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* Base card */
+.pricing-card {
+  position: relative;
+  border-radius: 4px;
+}
+
+.pricing-card-inner {
+  background: #FFFFFF;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 2.8rem 2.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  transition: box-shadow 0.35s ease, transform 0.35s ease;
+}
+
+.pricing-card:hover .pricing-card-inner {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+/* Featured card — full villa */
+.pricing-card--featured {
+  margin-top: -1.5rem;
+}
+
+.pricing-card--featured .pricing-card-inner {
+  background: linear-gradient(160deg, #1a1d22 0%, #24292f 100%);
+  border-color: rgba(197, 160, 89, 0.35);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(197, 160, 89, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: var(--color-text-light);
+}
+
+.pricing-card--featured:hover .pricing-card-inner {
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(197, 160, 89, 0.4),
+    0 0 40px rgba(197, 160, 89, 0.12);
+  transform: translateY(-6px);
+}
+
+/* Recommended badge */
+.pricing-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0.35rem 1.2rem;
+  border-radius: 50px;
+  white-space: nowrap;
+  z-index: 2;
+  box-shadow: 0 4px 16px rgba(197, 160, 89, 0.45);
+}
+
+.pricing-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.pricing-title {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0;
+  color: inherit;
+}
+
+.pricing-card--featured .pricing-title {
+  color: #fff;
+}
+
+.pricing-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 1.4rem;
+}
+
+.pricing-card--featured .pricing-amount {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.pricing-currency {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.pricing-value {
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  line-height: 1;
+}
+
+.pricing-card--featured .pricing-value {
+  color: #fff;
+}
+
+.pricing-per {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.pricing-card--featured .pricing-per {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Feature list */
+.pricing-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.pricing-features li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.9rem;
+  color: var(--color-text-main);
+}
+
+.pricing-card--featured .pricing-features li {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.pricing-feature-muted {
+  opacity: 0.45;
+}
+
+.pricing-feature-muted svg path {
+  fill: #999 !important;
+}
+
+.pricing-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.pricing-card--featured .btn-primary {
+  background: var(--color-primary);
+  box-shadow: 0 6px 24px rgba(197, 160, 89, 0.4);
+}
+
+.pricing-card--featured .btn-primary:hover {
+  background: var(--color-primary-hover);
+  box-shadow: 0 8px 30px rgba(197, 160, 89, 0.55);
+}
+
+.pricing-card--featured .btn-outline {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+  .pricing-card--featured {
+    margin-top: 0;
+    order: -1;
+  }
+}
